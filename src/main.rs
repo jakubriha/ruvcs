@@ -1,4 +1,4 @@
-use std::{fs::{self, create_dir_all}, io::{Read, BufReader, self}, path::{Path}};
+use std::{fs::{self, create_dir_all}, io::{Read, BufReader, self}, path::Path};
 
 use sha1::{Sha1, Digest};
 
@@ -30,22 +30,22 @@ fn hash_object(object_content: &[u8]) -> io::Result<String> {
     Ok(object_hash)
 }
 
-fn main() {
-
-    let file = fs::File::open(r"E:\Users\jakub\Downloads\9690.png").expect("File cannot be read");
+fn hash_object_from_file<P: AsRef<Path>>(path: P) -> io::Result<String> {
+    
+    let file = fs::File::open(path)?;
 
     let mut reader = BufReader::new(file);
-
+    
     let mut buffer = Vec::new();
 
-    reader.read_to_end(&mut buffer).expect("File cannot be read");
+    reader.read_to_end(&mut buffer)?;
 
-    let hex_hash = hash_object(buffer.as_slice()).expect("File cannot be read");
+    hash_object(buffer.as_slice())
+}
+
+fn main() {
+
+    let hex_hash = hash_object_from_file(r"E:\Users\jakub\Downloads\test.txt").expect("File cannot be read");
     
     println!("{}", hex_hash);
-
-
-
-
-
 }
