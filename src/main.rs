@@ -1,10 +1,10 @@
 use std::{fs::{self, create_dir_all}, io::{Read, BufReader, self}, path::Path};
 
-use sha1::{Sha1, Digest};
+use sha2::{Sha256, Digest};
 
 fn get_hash(content: &[u8]) -> String {
 
-    let mut hasher = Sha1::new();
+    let mut hasher = Sha256::new();
 
     hasher.update(content);
 
