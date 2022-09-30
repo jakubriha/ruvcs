@@ -17,13 +17,15 @@ fn hash_object(object_content: &[u8]) -> io::Result<String> {
 
     let object_hash = get_hash(&object_content);
 
-    let path = Path::new(r"E:\Users\jakub\Downloads");
+    let hash_prefix = &object_hash[0..2];
+    let hash_suffix = &object_hash[2..];
 
-    let mut path = path.join(r"test\.vcs\objects\");
+    let mut path = Path::new(r"E:\Users\jakub\Downloads\test\.vcs\objects")
+        .join(hash_prefix);
 
     create_dir_all(path.clone())?;
 
-    path.push(object_hash.clone());
+    path.push(hash_suffix);
     
     fs::write(path, &object_content)?;
 
