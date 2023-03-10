@@ -1,9 +1,12 @@
-use std::{fs::{self, create_dir_all}, io::{Read, self}, path::Path};
+use std::{
+    fs::{self, create_dir_all},
+    io::{self, Read},
+    path::Path,
+};
 
-use sha2::{Sha256, Digest};
+use sha2::{Digest, Sha256};
 
 fn get_hash(content: &[u8]) -> String {
-
     let mut hasher = Sha256::new();
 
     hasher.update(content);
@@ -14,26 +17,23 @@ fn get_hash(content: &[u8]) -> String {
 }
 
 fn save_object(object_content: &[u8]) -> io::Result<String> {
-
     let object_hash = get_hash(&object_content);
 
     let hash_prefix = &object_hash[0..2];
     let hash_suffix = &object_hash[2..];
 
-    let mut path = Path::new(r"E:\Users\jakub\Downloads\test\.vcs\objects")
-        .join(hash_prefix);
+    let mut path = Path::new(r"E:\Users\jakub\Downloads\test\.vcs\objects").join(hash_prefix);
 
     create_dir_all(&path)?;
 
     path.push(hash_suffix);
-    
+
     fs::write(path, &object_content)?;
 
     Ok(object_hash)
 }
 
 fn save_object_given_file<P: AsRef<Path>>(path: P) -> io::Result<String> {
-    
     let mut file = fs::File::open(path)?;
 
     let mut buffer = Vec::new();
@@ -44,8 +44,8 @@ fn save_object_given_file<P: AsRef<Path>>(path: P) -> io::Result<String> {
 }
 
 fn main() {
+    let hex_hash =
+        save_object_given_file(r"E:\Users\jakub\Downloads\test.txt").expect("File cannot be read");
 
-    let hex_hash = save_object_given_file(r"E:\Users\jakub\Downloads\test.txt").expect("File cannot be read");
-    
     println!("{}", hex_hash);
 }
