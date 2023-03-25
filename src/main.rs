@@ -58,7 +58,7 @@ fn save_object(object_content: &[u8]) -> io::Result<Key> {
     let key_prefix = &key_as_string[0..2];
     let key_suffix = &key_as_string[2..];
 
-    let mut path = Path::new(r"E:\Users\jakub\Downloads\test\.vcs\objects").join(key_prefix);
+    let mut path = Path::new(r"E:\Users\jakub\Downloads\test\.ruvcs\objects").join(key_prefix);
 
     create_dir_all(&path)?;
 
