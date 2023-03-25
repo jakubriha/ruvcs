@@ -45,13 +45,13 @@ impl LowerHex for Key {
 }
 
 impl Key {
-    fn new(object_content: &[u8]) -> Self {
-        Key(Sha256::digest(object_content))
+    fn generate_from_content(content: &[u8]) -> Self {
+        Key(Sha256::digest(content))
     }
 }
 
 fn save_object(object_content: &[u8]) -> io::Result<Key> {
-    let key = Key::new(&object_content);
+    let key = Key::generate_from_content(&object_content);
 
     let key_as_string = format!("{:x}", key);
 
