@@ -8,5 +8,11 @@
   "files.exclude": {
     "target": true,
     "Cargo.lock": true
+  },
+  "workbench.colorCustomizations": {
+    "[Default Dark+]": {
+      "editorInlayHint.foreground": "#878787f0",
+      "editorInlayHint.background": "#00000000",
+    }
   }
 }
