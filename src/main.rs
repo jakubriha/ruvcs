@@ -1,9 +1,12 @@
 use std::{
+    fmt::LowerHex,
     fs::{self, create_dir_all},
     io::{self, Read},
     path::Path,
+    str::FromStr,
 };
 
+use hex::FromHexError;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take, take_until},
@@ -11,8 +14,9 @@ use nom::{
     combinator::map,
     multi::separated_list1,
     sequence::tuple,
-    AsBytes, IResult,
+    IResult,
 };
+
 use sha2::{
     digest::{
         generic_array::GenericArray,
@@ -21,10 +25,33 @@ use sha2::{
     Digest, Sha256,
 };
 
-type Key = GenericArray<u8, UInt<UInt<UInt<UInt<UInt<UInt<UTerm, B1>, B0>, B0>, B0>, B0>, B0>>;
+struct Key(GenericArray<u8, UInt<UInt<UInt<UInt<UInt<UInt<UTerm, B1>, B0>, B0>, B0>, B0>, B0>>);
+
+impl FromStr for Key {
+    type Err = FromHexError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let byte_array = hex::decode(&s)?;
+
+        // TODO: Return error if byte array has wrong length
+        Ok(Key(GenericArray::clone_from_slice(byte_array.as_slice())))
+    }
+}
+
+impl LowerHex for Key {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:x}", self.0)
+    }
+}
+
+impl Key {
+    fn new(object_content: &[u8]) -> Self {
+        Key(Sha256::digest(object_content))
+    }
+}
 
 fn save_object(object_content: &[u8]) -> io::Result<Key> {
-    let key = Sha256::digest(&object_content);
+    let key = Key::new(&object_content);
 
     let key_as_string = format!("{:x}", key);
 
@@ -85,7 +112,7 @@ impl TreeEntry {
     fn mode_parser(input: &str) -> IResult<&str, Mode> {
         let parser = alt((tag("blob"), tag("tree")));
 
-        map(parser, |o| match o {
+        map(parser, |parsed_string| match parsed_string {
             "blob" => Mode::Blob,
             "tree" => Mode::Tree,
             _ => panic!(),
@@ -95,12 +122,8 @@ impl TreeEntry {
     fn key_parser(input: &str) -> IResult<&str, Key> {
         let parser = take(64usize);
 
-        map(parser, |o| {
-            let decoded = hex::decode(&o).expect("msg");
-
-            let x: Key = GenericArray::clone_from_slice(decoded.as_bytes());
-
-            x
+        map(parser, |parsed_string| {
+            Key::from_str(parsed_string).unwrap()
         })(input)
     }
 
@@ -140,8 +163,8 @@ fn main() {
 
     println!("{}", k.entries[1].name);
 
-    // let hex_hash =
-    //     save_object_given_file(r"E:\Users\jakub\Downloads\test.txt").expect("File cannot be read");
+    let hex_hash =
+        save_object_given_file(r"E:\Users\jakub\Downloads\test.txt").expect("File cannot be read");
 
     // let hex_hash =
     //     save_object_given_file(r"E:\Users\jakub\Downloads\test.txt").expect("File cannot be read");
