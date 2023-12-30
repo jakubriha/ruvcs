@@ -69,7 +69,7 @@ fn save_object(object_content: &[u8]) -> io::Result<Key> {
     Ok(key)
 }
 
-fn save_object_given_file<P: AsRef<Path>>(path: P) -> io::Result<Key> {
+fn save_object_given_file(path: impl AsRef<Path>) -> io::Result<Key> {
     let mut file = fs::File::open(path)?;
 
     let mut buffer = Vec::new();
@@ -115,6 +115,7 @@ impl TreeEntry {
             Self::name_parser,
         ));
 
+        // TODO: I think there is no need to initialize parser every time.
         let mut r = map(pars, |(mode, _, key, _, name)| Self {
             mode,
             key,
@@ -170,7 +171,7 @@ impl Tree {
         r(input)
     }
 
-    pub fn from_reader<T: Read>(reader: &mut T) -> Self {
+    pub fn from_reader(reader: &mut impl Read) -> Self {
         let mut buffer = String::default();
 
         let _ = reader.read_to_string(&mut buffer);
