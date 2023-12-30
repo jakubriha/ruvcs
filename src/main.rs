@@ -91,6 +91,21 @@ struct TreeEntry {
 }
 
 impl TreeEntry {
+    pub fn write(writer: &mut impl io::Write, input: &Self) -> io::Result<()> {
+        let serialized_mode = match input.mode {
+            Mode::Blob => "blob",
+            Mode::Tree => "tree",
+        };
+
+        write!(
+            writer,
+            "{} {:x}\t{}",
+            serialized_mode, input.key, input.name
+        )?;
+
+        Ok(())
+    }
+
     pub fn parse(input: &str) -> IResult<&str, Self> {
         let pars = tuple((
             Self::mode_parser,
@@ -137,6 +152,16 @@ struct Tree {
 }
 
 impl Tree {
+    pub fn write(writer: &mut impl io::Write, input: &Self) -> io::Result<()> {
+        for entry in input.entries.iter() {
+            TreeEntry::write(writer, entry)?;
+
+            write!(writer, "\n")?;
+        }
+
+        Ok(())
+    }
+
     pub fn parse(input: &str) -> IResult<&str, Self> {
         let parser = separated_list1(line_ending, TreeEntry::parse);
 
@@ -159,12 +184,16 @@ impl Tree {
 fn main() {
     let mut file = fs::File::open(r"E:\Users\jakub\Downloads\tree.txt").unwrap();
 
-    let k = Tree::from_reader(&mut file);
+    let tree = Tree::from_reader(&mut file);
 
-    println!("{}", k.entries[1].name);
+    println!("{}", tree.entries[1].name);
 
     let hex_hash =
         save_object_given_file(r"E:\Users\jakub\Downloads\test.txt").expect("File cannot be read");
+
+    let mut file = fs::File::create(r"E:\Users\jakub\Downloads\tree.written.txt").unwrap();
+
+    Tree::write(&mut file, &tree).unwrap();
 
     // let hex_hash =
     //     save_object_given_file(r"E:\Users\jakub\Downloads\test.txt").expect("File cannot be read");
