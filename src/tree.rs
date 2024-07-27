@@ -1,8 +1,9 @@
 use std::{
+    env,
     fmt::LowerHex,
     fs::{self, create_dir_all},
     io::{self, Read},
-    path::Path,
+    path::{Path, PathBuf},
     str::FromStr,
 };
 
@@ -50,34 +51,69 @@ impl Key {
     }
 }
 
-fn save_object(object_content: &[u8]) -> io::Result<Key> {
-    let key = Key::generate_from_content(&object_content);
+trait ObjectRepository {
+    fn load(&self, key: &Key) -> io::Result<Vec<u8>>;
 
-    let key_as_string = format!("{:x}", key);
-
-    let key_prefix = &key_as_string[0..2];
-    let key_suffix = &key_as_string[2..];
-
-    let mut path = Path::new(r"E:\Users\jakub\Downloads\test\.ruvcs\objects").join(key_prefix);
-
-    create_dir_all(&path)?;
-
-    path.push(key_suffix);
-
-    fs::write(path, &object_content)?;
-
-    Ok(key)
+    fn save(&self, content: &[u8]) -> io::Result<Key>;
 }
 
-fn save_object_given_file(path: impl AsRef<Path>) -> io::Result<Key> {
-    let mut file = fs::File::open(path)?;
-
-    let mut buffer = Vec::new();
-
-    file.read_to_end(&mut buffer)?;
-
-    save_object(buffer.as_slice())
+pub struct FileSystemObjectRepository {
+    working_directory: PathBuf,
 }
+
+impl FileSystemObjectRepository {
+    pub fn new() -> io::Result<Self> {
+        let working_directory = env::current_dir()?;
+
+        Ok(FileSystemObjectRepository {
+            working_directory,
+        })
+    }
+}
+
+impl ObjectRepository for FileSystemObjectRepository {
+    fn load(&self, key: &Key) -> io::Result<Vec<u8>> {
+        let key_as_string = format!("{:x}", key);
+
+        let key_prefix = &key_as_string[0..2];
+        let key_suffix = &key_as_string[2..];
+
+        let mut path = self.working_directory.join(key_prefix);
+
+        path.push(key_suffix);
+
+        fs::read(path)
+    }
+
+    fn save(&self, object_content: &[u8]) -> io::Result<Key> {
+        let key = Key::generate_from_content(object_content);
+
+        let key_as_string = format!("{:x}", key);
+
+        let key_prefix = &key_as_string[0..2];
+        let key_suffix = &key_as_string[2..];
+
+        let mut path = self.working_directory.join(key_prefix);
+
+        create_dir_all(&path)?;
+
+        path.push(key_suffix);
+
+        fs::write(path, object_content)?;
+
+        Ok(key)
+    }
+}
+
+// fn save_object_given_file(path: impl AsRef<Path>) -> io::Result<Key> {
+//     let mut file = fs::File::open(path)?;
+
+//     let mut buffer = Vec::new();
+
+//     file.read_to_end(&mut buffer)?;
+
+//     save_object(buffer.as_slice())
+// }
 
 enum Mode {
     Blob,
